@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Mira Valorant Aleatória</title>
+    <style>
+        :root {
+            --bg-color: #0f1923;
+            --accent-color: #ff4655;
+            --text-color: #ece8e1;
+            --panel-bg: #1f2731;
+            
+            /* Variáveis Dinâmicas da Mira (JS injetará valores aqui) */
+            --c-color: #00ff00;
+            --c-outline-color: rgba(0,0,0,1);
+            --c-outline-width: 0px;
+            
+            /* Linhas Internas */
+            --i-opacity: 1;
+            --i-length: 6px;
+            --i-thickness: 2px;
+            --i-offset: 3px;
+
+            /* Linhas Externas */
+            --o-opacity: 0;
+            --o-length: 0px;
+            --o-thickness: 0px;
+            --o-offset: 0px;
+
+            /* Ponto Central */
+            --d-opacity: 0;
+            --d-size: 0px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-bottom: 2px solid var(--accent-color);
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        /* Área de Visualização da Mira */
+        .preview-box {
+            width: 400px;
+            height: 300px;
+            background-image: url('https://images.contentstack.io/v3/assets/bltb6530b271fddd0b1/blt5f79a32c7bf6957c/64e6730335269785c49d8708/Val_Ep7_Act2_Article_Header.jpg');
+            background-size: cover;
+            background-position: center;
+            border: 2px solid var(--accent-color);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            border-radius: 4px;
+        }
+
+        /* Estrutura da Mira CSS */
+        .crosshair-wrapper {
+            position: relative;
+            width: 0;
+            height: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .line {
+            position: absolute;
+            background-color: var(--c-color);
+            box-shadow: 0 0 0 var(--c-outline-width) var(--c-outline-color);
+        }
+
+        /* Ponto Central */
+        .dot {
+            position: absolute;
+            width: var(--d-size);
+            height: var(--d-size);
+            background-color: var(--c-color);
+            opacity: var(--d-opacity);
+            box-shadow: 0 0 0 var(--c-outline-width) var(--c-outline-color);
+            z-index: 10;
+        }
+
+        /* Linhas Internas */
+        .inner-h {
+            width: var(--i-length);
+            height: var(--i-thickness);
+            opacity: var(--i-opacity);
+        }
+        .inner-v {
+            width: var(--i-thickness);
+            height: var(--i-length);
+            opacity: var(--i-opacity);
+        }
+        .inner.top { transform: translateY(calc(var(--i-offset) * -1)); }
+        .inner.bottom { transform: translateY(var(--i-offset)); }
+        .inner.left { transform: translateX(calc(var(--i-offset) * -1)); }
+        .inner.right { transform: translateX(var(--i-offset)); }
+
+        /* Linhas Externas */
+        .outer-h {
+            width: var(--o-length);
+            height: var(--o-thickness);
+            opacity: var(--o-opacity);
+        }
+        .outer-v {
+            width: var(--o-thickness);
+            height: var(--o-length);
+            opacity: var(--o-opacity);
+        }
+        .outer.top { transform: translateY(calc(var(--o-offset) * -1)); }
+        .outer.bottom { transform: translateY(var(--o-offset)); }
+        .outer.left { transform: translateX(calc(var(--o-offset) * -1)); }
+        .outer.right { transform: translateX(var(--o-offset)); }
+
+        /* Controles */
+        .controls {
+            background-color: var(--panel-bg);
+            padding: 20px;
+            border-radius: 8px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .code-display {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            background: #000;
+            color: #fff;
+            border: 1px solid #444;
+            font-family: monospace;
+            font-size: 0.9em;
+            text-align: center;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            transition: 0.2s;
+            border-radius: 2px;
+        }
+
+        .btn-gen {
+            background-color: var(--accent-color);
+            color: white;
+        }
+        .btn-gen:hover { background-color: #d13644; }
+
+        .btn-copy {
+            background-color: #ece8e1;
+            color: #0f1923;
+        }
+        .btn-copy:hover { background-color: #c7c4be; }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Gerador de Mira Valorant</h1>
+
+        <div class="preview-box">
+            <div class="crosshair-wrapper">
+                <div class="dot"></div>
+
+                <div class="line inner inner-v top"></div>
+                <div class="line inner inner-v bottom"></div>
+                <div class="line inner inner-h left"></div>
+                <div class="line inner inner-h right"></div>
+
+                <div class="line outer outer-v top"></div>
+                <div class="line outer outer-v bottom"></div>
+                <div class="line outer outer-h left"></div>
+                <div class="line outer outer-h right"></div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <p>Clique para gerar uma nova mira aleatória</p>
+            <input type="text" id="valorantCode" class="code-display" readonly placeholder="Código aparecerá aqui...">
+            
+            <div class="btn-group">
+                <button class="btn-gen" onclick="generateCrosshair()">Gerar Aleatória</button>
+                <button class="btn-copy" onclick="copyCode()">Copiar Código</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mapeamento de cores do Valorant (Índices 0-7)
+        const VALORANT_COLORS = [
+            '#FFFFFF', // 0: Branco
+            '#00FF00', // 1: Verde (Green)
+            '#7FFF00', // 2: Amarelo esverdeado (Yellow Green)
+            '#DFFF00', // 3: Amarelo Esverdeado (Green Yellow)
+            '#FFFF00', // 4: Amarelo
+            '#00FFFF', // 5: Ciano
+            '#FF00FF', // 6: Rosa
+            '#FF0000'  // 7: Vermelho
+        ];
+
+        // Função auxiliar para números aleatórios
+        const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+        // Função auxiliar para booleanos (com peso, bias serve para tornar 'true' menos provável se < 0.5)
+        const randBool = (bias = 0.5) => Math.random() < bias ? 1 : 0;
+
+        function generateCrosshair() {
+            // 1. Definir os valores aleatórios
+            const stats = {
+                // Geral
+                c: rand(0, 7), // Cor
+                h: randBool(0.3), // Outlines (30% de chance de ter contorno)
+                t: rand(1, 3),    // Espessura contorno
+                o: 1,             // Opacidade contorno (geralmente fixa se ligado)
+                
+                // Ponto Central (Dot)
+                d: randBool(0.3), // 30% chance de ter ponto
+                z: rand(2, 6),    // Espessura do ponto
+                a: 1,             // Opacidade ponto
+
+                // Linhas Internas (0)
+                innerOn: randBool(0.9), // 90% chance de ter linhas internas
+                l0: rand(2, 14),   // Length
+                t0: rand(1, 6),    // Thickness (Valorant permite decimais, mas usamos int para simplificar visual)
+                o0: rand(0, 10),   // Offset
+                a0: 1,             // Opacidade
+
+                // Linhas Externas (1)
+                outerOn: randBool(0.4), // 40% chance de ter linhas externas
+                l1: rand(2, 10),
+                t1: rand(1, 4),
+                o1: rand(5, 20),
+                a1: 1
+            };
+
+            // Garantir que pelo menos o ponto ou as linhas internas existam para não ficar invisível
+            if (!stats.d && !stats.innerOn) {
+                stats.innerOn = 1;
+            }
+
+            // 2. Construir a string de código do Valorant
+            // Ex: 0;P;c;5;h;0;0l;4;0o;2;0a;1;0f;0;1b;0
+            let code = `0;P`;
+            
+            // Cor
+            code += `;c;${stats.c}`;
+            
+            // Outlines
+            code += `;h;${stats.h}`;
+            if(stats.h) {
+                code += `;t;${stats.t};o;${stats.o}`;
+            }
+
+            // Center Dot
+            code += `;d;${stats.d}`;
+            if(stats.d) {
+                code += `;z;${stats.z};a;${stats.a}`;
+            }
+
+            // Inner Lines
+            code += `;0b;${stats.innerOn}`; // 0b liga/desliga inner lines
+            if(stats.innerOn) {
+                code += `;0l;${stats.l0};0t;${stats.t0};0o;${stats.o0};0a;${stats.a0}`;
+            }
+            code += `;0f;0`; // Desliga erro de tiro visual (padrão pro players)
+
+            // Outer Lines
+            code += `;1b;${stats.outerOn}`;
+            if(stats.outerOn) {
+                code += `;1l;${stats.l1};1t;${stats.t1};1o;${stats.o1};1a;${stats.a1}`;
+            }
+            code += `;1m;0;1f;0`; // Desliga erro de movimento outer
+
+            // 3. Atualizar o CSS para visualização (Preview)
+            const r = document.querySelector(':root');
+
+            // Cor
+            r.style.setProperty('--c-color', VALORANT_COLORS[stats.c]);
+            
+            // Outlines
+            if(stats.h) {
+                r.style.setProperty('--c-outline-width', `${stats.t}px`);
+                r.style.setProperty('--c-outline-color', `rgba(0,0,0,${stats.o})`);
+            } else {
+                r.style.setProperty('--c-outline-width', `0px`);
+            }
+
+            // Dot
+            r.style.setProperty('--d-opacity', stats.d ? stats.a : 0);
+            r.style.setProperty('--d-size', `${stats.z}px`);
+
+            // Inner Lines
+            r.style.setProperty('--i-opacity', stats.innerOn ? stats.a0 : 0);
+            r.style.setProperty('--i-length', `${stats.l0}px`);
+            r.style.setProperty('--i-thickness', `${stats.t0}px`);
+            r.style.setProperty('--i-offset', `${stats.o0}px`);
+
+            // Outer Lines
+            r.style.setProperty('--o-opacity', stats.outerOn ? stats.a1 : 0);
+            r.style.setProperty('--o-length', `${stats.l1}px`);
+            r.style.setProperty('--o-thickness', `${stats.t1}px`);
+            r.style.setProperty('--o-offset', `${stats.o1}px`); // Offset outer geralmente soma com inner, mas simplificado aqui
+
+            // Atualizar input
+            document.getElementById('valorantCode').value = code;
+        }
+
+        function copyCode() {
+            const copyText = document.getElementById("valorantCode");
+            copyText.select();
+            copyText.setSelectionRange(0, 99999); 
+            navigator.clipboard.writeText(copyText.value).then(() => {
+                const btn = document.querySelector('.btn-copy');
+                const originalText = btn.innerText;
+                btn.innerText = "Copiado!";
+                setTimeout(() => btn.innerText = originalText, 2000);
+            });
+        }
+
+        // Gerar uma mira ao carregar a página
+        window.onload = generateCrosshair;
+
+    </script>
+</body>
+</html>
